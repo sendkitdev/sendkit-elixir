@@ -4,7 +4,7 @@ defmodule SendKitTest do
   test "new client with api key" do
     client = SendKit.new("sk_test_123")
     assert client.api_key == "sk_test_123"
-    assert client.base_url == "https://api.sendkit.com"
+    assert client.base_url == "https://api.sendkit.dev"
   end
 
   test "new client with custom base url" do

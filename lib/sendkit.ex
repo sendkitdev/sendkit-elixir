@@ -13,7 +13,7 @@ defmodule SendKit do
       })
   """
 
-  @default_base_url "https://api.sendkit.com"
+  @default_base_url "https://api.sendkit.dev"
 
   defstruct [:api_key, :base_url, :req]
 
