@@ -1,0 +1,7 @@
+/_build/
+/deps/
+/doc/
+*.ez
+*.beam
+sendkit-*.tar
+.DS_Store
