@@ -31,7 +31,7 @@ defmodule SendKitTest do
     bypass = Bypass.open()
     client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
 
-    Bypass.expect_once(bypass, "POST", "/v1/emails", fn conn ->
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       params = Jason.decode!(body)
 
@@ -60,7 +60,7 @@ defmodule SendKitTest do
     bypass = Bypass.open()
     client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
 
-    Bypass.expect_once(bypass, "POST", "/v1/emails", fn conn ->
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       params = Jason.decode!(body)
 
@@ -89,7 +89,7 @@ defmodule SendKitTest do
     bypass = Bypass.open()
     client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
 
-    Bypass.expect_once(bypass, "POST", "/v1/emails/mime", fn conn ->
+    Bypass.expect_once(bypass, "POST", "/emails/mime", fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       params = Jason.decode!(body)
 
@@ -114,7 +114,7 @@ defmodule SendKitTest do
     bypass = Bypass.open()
     client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
 
-    Bypass.expect_once(bypass, "POST", "/v1/emails", fn conn ->
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
       conn
       |> Plug.Conn.put_resp_content_type("application/json")
       |> Plug.Conn.resp(

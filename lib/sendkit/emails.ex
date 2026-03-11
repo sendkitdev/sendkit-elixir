@@ -49,7 +49,7 @@ defmodule SendKit.Emails do
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
       |> Map.new()
 
-    case Req.post(client.req, url: "/v1/emails", json: body) do
+    case Req.post(client.req, url: "/emails", json: body) do
       {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
         {:ok, body}
 
@@ -90,7 +90,7 @@ defmodule SendKit.Emails do
   def send_mime(%SendKit{} = client, params) when is_map(params) do
     body = Map.take(params, [:envelope_from, :envelope_to, :raw_message])
 
-    case Req.post(client.req, url: "/v1/emails/mime", json: body) do
+    case Req.post(client.req, url: "/emails/mime", json: body) do
       {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
         {:ok, body}
 
