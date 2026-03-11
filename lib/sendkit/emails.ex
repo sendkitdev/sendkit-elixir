@@ -11,7 +11,7 @@ defmodule SendKit.Emails do
     * `client` - A `SendKit` client
     * `params` - A map with email parameters:
       * `:from` (required) - Sender email address
-      * `:to` (required) - List of recipient email addresses
+      * `:to` (required) - Recipient email address (string) or list of addresses. Supports display name format (e.g. "Bob <bob@example.com>")
       * `:subject` (required) - Email subject
       * `:html` - HTML body
       * `:text` - Plain text body
