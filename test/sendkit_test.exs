@@ -56,6 +56,54 @@ defmodule SendKitTest do
              })
   end
 
+  test "send email with single string to" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["to"] == "recipient@example.com"
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "single-to-123"}))
+    end)
+
+    assert {:ok, %{"id" => "single-to-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: "recipient@example.com",
+               subject: "Test Email",
+               html: "<p>Hello</p>"
+             })
+  end
+
+  test "send email with display name format" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["to"] == "Bob <recipient@example.com>"
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "display-name-123"}))
+    end)
+
+    assert {:ok, %{"id" => "display-name-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: "Bob <recipient@example.com>",
+               subject: "Test Email",
+               html: "<p>Hello</p>"
+             })
+  end
+
   test "send email with optional fields" do
     bypass = Bypass.open()
     client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
