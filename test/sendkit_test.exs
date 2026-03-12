@@ -158,6 +158,185 @@ defmodule SendKitTest do
              })
   end
 
+  test "send email with multiple to recipients" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["to"] == ["alice@example.com", "bob@example.com"]
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "multi-to-123"}))
+    end)
+
+    assert {:ok, %{"id" => "multi-to-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["alice@example.com", "bob@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>"
+             })
+  end
+
+  test "send email with cc and bcc" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["cc"] == ["cc@example.com"]
+      assert params["bcc"] == ["bcc@example.com"]
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "cc-bcc-123"}))
+    end)
+
+    assert {:ok, %{"id" => "cc-bcc-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               cc: ["cc@example.com"],
+               bcc: ["bcc@example.com"]
+             })
+  end
+
+  test "send email with reply_to" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["reply_to"] == "replies@example.com"
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "reply-to-123"}))
+    end)
+
+    assert {:ok, %{"id" => "reply-to-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               reply_to: "replies@example.com"
+             })
+  end
+
+  test "send email with text instead of html" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["text"] == "Hello, plain text"
+      refute Map.has_key?(params, "html")
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "text-only-123"}))
+    end)
+
+    assert {:ok, %{"id" => "text-only-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               text: "Hello, plain text"
+             })
+  end
+
+  test "send email with headers" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["headers"] == %{"X-Custom" => "value", "X-Track" => "123"}
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "headers-123"}))
+    end)
+
+    assert {:ok, %{"id" => "headers-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               headers: %{"X-Custom" => "value", "X-Track" => "123"}
+             })
+  end
+
+  test "send email with tags" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["tags"] == ["welcome", "onboarding"]
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "tags-123"}))
+    end)
+
+    assert {:ok, %{"id" => "tags-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               tags: ["welcome", "onboarding"]
+             })
+  end
+
+  test "send email with attachments" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert [attachment] = params["attachments"]
+      assert attachment["filename"] == "test.pdf"
+      assert attachment["content"] == "base64data"
+      assert attachment["content_type"] == "application/pdf"
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "attachments-123"}))
+    end)
+
+    assert {:ok, %{"id" => "attachments-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               attachments: [%{filename: "test.pdf", content: "base64data", content_type: "application/pdf"}]
+             })
+  end
+
   test "api error" do
     bypass = Bypass.open()
     client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")

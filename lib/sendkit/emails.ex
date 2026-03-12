@@ -88,7 +88,11 @@ defmodule SendKit.Emails do
   """
   @spec send_mime(SendKit.t(), map()) :: {:ok, map()} | {:error, SendKit.Error.t()}
   def send_mime(%SendKit{} = client, params) when is_map(params) do
-    body = Map.take(params, [:envelope_from, :envelope_to, :raw_message])
+    body =
+      params
+      |> Map.take([:envelope_from, :envelope_to, :raw_message])
+      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+      |> Map.new()
 
     case Req.post(client.req, url: "/emails/mime", json: body) do
       {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
