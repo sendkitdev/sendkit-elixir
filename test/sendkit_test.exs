@@ -112,7 +112,7 @@ defmodule SendKitTest do
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       params = Jason.decode!(body)
 
-      assert params["reply_to"] == "reply@example.com"
+      assert params["reply_to"] == ["reply@example.com"]
       assert params["scheduled_at"] == "2026-03-01T10:00:00Z"
       refute Map.has_key?(params, "cc")
 
@@ -127,7 +127,7 @@ defmodule SendKitTest do
                to: ["recipient@example.com"],
                subject: "Test",
                html: "<p>Hi</p>",
-               reply_to: "reply@example.com",
+               reply_to: ["reply@example.com"],
                scheduled_at: "2026-03-01T10:00:00Z",
                cc: nil
              })
@@ -217,7 +217,7 @@ defmodule SendKitTest do
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       params = Jason.decode!(body)
 
-      assert params["reply_to"] == "replies@example.com"
+      assert params["reply_to"] == ["replies@example.com"]
 
       conn
       |> Plug.Conn.put_resp_content_type("application/json")
@@ -230,7 +230,7 @@ defmodule SendKitTest do
                to: ["recipient@example.com"],
                subject: "Test Email",
                html: "<p>Hello</p>",
-               reply_to: "replies@example.com"
+               reply_to: ["replies@example.com"]
              })
   end
 
@@ -338,6 +338,81 @@ defmodule SendKitTest do
                subject: "Test Email",
                html: "<p>Hello</p>",
                attachments: [%{filename: "test.pdf", content: "base64data", content_type: "application/pdf"}]
+             })
+  end
+
+  test "send email with cc as single string normalizes to list" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["cc"] == ["cc@example.com"]
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "cc-string-123"}))
+    end)
+
+    assert {:ok, %{"id" => "cc-string-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               cc: "cc@example.com"
+             })
+  end
+
+  test "send email with bcc as single string normalizes to list" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["bcc"] == ["bcc@example.com"]
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "bcc-string-123"}))
+    end)
+
+    assert {:ok, %{"id" => "bcc-string-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               bcc: "bcc@example.com"
+             })
+  end
+
+  test "send email with reply_to as single string normalizes to list" do
+    bypass = Bypass.open()
+    client = SendKit.new("sk_test_123", base_url: "http://localhost:#{bypass.port}")
+
+    Bypass.expect_once(bypass, "POST", "/emails", fn conn ->
+      {:ok, body, conn} = Plug.Conn.read_body(conn)
+      params = Jason.decode!(body)
+
+      assert params["reply_to"] == ["reply@example.com"]
+
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(200, Jason.encode!(%{"id" => "reply-to-string-123"}))
+    end)
+
+    assert {:ok, %{"id" => "reply-to-string-123"}} =
+             SendKit.Emails.send(client, %{
+               from: "sender@example.com",
+               to: ["recipient@example.com"],
+               subject: "Test Email",
+               html: "<p>Hello</p>",
+               reply_to: "reply@example.com"
              })
   end
 

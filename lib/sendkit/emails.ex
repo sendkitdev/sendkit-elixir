@@ -17,7 +17,7 @@ defmodule SendKit.Emails do
       * `:text` - Plain text body
       * `:cc` - List of CC addresses
       * `:bcc` - List of BCC addresses
-      * `:reply_to` - Reply-to address
+      * `:reply_to` - List of reply-to addresses
       * `:headers` - Map of custom headers
       * `:tags` - List of tag maps with `:name` and `:value` keys
       * `:scheduled_at` - Schedule send time (ISO 8601)
@@ -48,6 +48,9 @@ defmodule SendKit.Emails do
       ])
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
       |> Map.new()
+      |> normalize_to_list(:reply_to)
+      |> normalize_to_list(:cc)
+      |> normalize_to_list(:bcc)
 
     case Req.post(client.req, url: "/emails", json: body) do
       {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
@@ -112,6 +115,13 @@ defmodule SendKit.Emails do
            name: "http_error",
            message: "HTTP request failed: #{inspect(reason)}"
          }}
+    end
+  end
+
+  defp normalize_to_list(params, key) do
+    case Map.get(params, key) do
+      value when is_binary(value) -> Map.put(params, key, [value])
+      _ -> params
     end
   end
 end
