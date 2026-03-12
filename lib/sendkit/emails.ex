@@ -19,7 +19,7 @@ defmodule SendKit.Emails do
       * `:bcc` - List of BCC addresses
       * `:reply_to` - Reply-to address
       * `:headers` - Map of custom headers
-      * `:tags` - List of tags
+      * `:tags` - List of tag maps with `:name` and `:value` keys
       * `:scheduled_at` - Schedule send time (ISO 8601)
       * `:attachments` - List of attachment maps with `:filename`, `:content`, and optional `:content_type`
 

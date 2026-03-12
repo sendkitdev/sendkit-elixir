@@ -292,7 +292,11 @@ defmodule SendKitTest do
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       params = Jason.decode!(body)
 
-      assert params["tags"] == ["welcome", "onboarding"]
+      assert [tag1, tag2] = params["tags"]
+      assert tag1["name"] == "category"
+      assert tag1["value"] == "welcome"
+      assert tag2["name"] == "campaign"
+      assert tag2["value"] == "onboarding"
 
       conn
       |> Plug.Conn.put_resp_content_type("application/json")
@@ -305,7 +309,7 @@ defmodule SendKitTest do
                to: ["recipient@example.com"],
                subject: "Test Email",
                html: "<p>Hello</p>",
-               tags: ["welcome", "onboarding"]
+               tags: [%{name: "category", value: "welcome"}, %{name: "campaign", value: "onboarding"}]
              })
   end
 
